@@ -1,3 +1,7 @@
+/* globals React, createProjectStatusUrl, environmentConfigContext, deployKey */
+/* globals deployKeyTestUrl, canAccessRepo, gitUrl, repoInterface */
+'use strict';
+
 var DeploymentDialog = require('./deployment_dialog.jsx');
 var CreateProjectProgress = require('./create_project_progress.jsx');
 

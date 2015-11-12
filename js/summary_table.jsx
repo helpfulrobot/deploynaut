@@ -1,11 +1,14 @@
+/* global React */
+'use strict';
 
 /**
  * @jsx React.DOM
  */
 var SummaryTable = React.createClass({
+	displayName: 'SummaryTable',
 	isEmpty: function(obj) {
-		for (var key in obj) {
-			if (obj.hasOwnProperty(key) && obj[key]) {
+		for(var key in obj) {
+			if(obj.hasOwnProperty(key) && obj[key]) {
 				return false;
 			}
 		}
@@ -21,29 +24,41 @@ var SummaryTable = React.createClass({
 			idx++;
 
 			var compareUrl = null;
-			if(typeof changes[key].compareUrl != 'undefined') {
+			if(typeof changes[key].compareUrl !== 'undefined') {
 				compareUrl = changes[key].compareUrl;
 			}
 
-			if(typeof changes[key].description!=='undefined') {
+			if(typeof changes[key].description !== 'undefined') {
 
-				if (changes[key].description!=="") {
-					return <DescriptionOnlySummaryLine key={idx} name={key} description={changes[key].description} />
-				} else {
-					return <UnchangedSummaryLine key={idx} name={key} value="" />
+				if(changes[key].description !== '') {
+					return (
+						<DescriptionOnlySummaryLine key={idx}
+							name={key}
+							description={changes[key].description}/>
+					);
 				}
+				return <UnchangedSummaryLine key={idx} name={key} value=""/>;
 
-			} else if(changes[key].from != changes[key].to) {
-				return <SummaryLine key={idx} name={key} from={changes[key].from} to={changes[key].to} compareUrl={compareUrl} />
-			} else {
-				return <UnchangedSummaryLine key={idx} name={key} value={changes[key].from} />
+			} else if(changes[key].from !== changes[key].to) {
+				return (
+					<SummaryLine key={idx}
+						name={key}
+						from={changes[key].from}
+						to={changes[key].to}
+						compareUrl={compareUrl}/>
+				);
 			}
+			return (
+				<UnchangedSummaryLine key={idx}
+					name={key}
+					value={changes[key].from}/>
+			);
 		});
 
 		return (
 			<table className="table table-striped table-hover">
 				<tbody>
-					{summaryLines}
+				{summaryLines}
 				</tbody>
 			</table>
 		);
@@ -51,43 +66,45 @@ var SummaryTable = React.createClass({
 });
 
 var SummaryLine = React.createClass({
+	displayName: 'SummaryLine',
 	render: function() {
 		var from = this.props.from,
 			to = this.props.to;
 
 		// naive git sha detection
 		if(from !== null && from.length === 40) {
-			from = from.substring(0,7);
+			from = from.substring(0, 7);
 		}
 
 		// naive git sha detection
 		if(to !== null && to.length === 40) {
-			to = to.substring(0,7);
+			to = to.substring(0, 7);
 		}
 
 		var compareUrl = null;
 		if(this.props.compareUrl !== null) {
-			compareUrl = <a target="_blank" href={this.props.compareUrl}>View diff</a>
+			compareUrl = <a target="_blank" href={this.props.compareUrl}>View diff</a>;
 		}
 
 		return (
 			<tr>
 				<th scope="row">{this.props.name}</th>
 				<td>{from}</td>
-				<td><span className="glyphicon glyphicon-arrow-right" /></td>
+				<td><span className="glyphicon glyphicon-arrow-right"/></td>
 				<td>{to}</td>
 				<td className="changeAction">{compareUrl}</td>
 			</tr>
-		)
+		);
 	}
 });
 
 var UnchangedSummaryLine = React.createClass({
+	displayName: 'UnchangedSummaryLine',
 	render: function() {
 		var from = this.props.value;
 		// naive git sha detection
 		if(from !== null && from.length === 40) {
-			from = from.substring(0,7);
+			from = from.substring(0, 7);
 		}
 
 		return (
@@ -103,11 +120,13 @@ var UnchangedSummaryLine = React.createClass({
 });
 
 var DescriptionOnlySummaryLine = React.createClass({
+	displayName: 'DescriptionOnlySummaryLine',
 	render: function() {
 		return (
 			<tr>
 				<th scope="row">{this.props.name}</th>
-				<td colSpan="4" dangerouslySetInnerHTML={{__html: this.props.description}} />
+				<td colSpan="4"
+					dangerouslySetInnerHTML={{__html: this.props.description}}/>
 			</tr>
 		);
 	}

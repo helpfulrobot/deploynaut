@@ -1,22 +1,21 @@
+/* globals React, Q */
+'use strict';
+
 var Events = require('./events.js');
 var Helpers = require('./helpers.js');
 var DeployPlan = require('./deploy_plan.jsx');
 
 var DeploymentDialog = React.createClass({
 
-	loadingSub: null,
-
-	loadingDoneSub: null,
-
-	errorSub: null,
+	displayName: 'DeploymentDialog.DeploymentDialog',
 
 	getInitialState: function() {
 		return {
 			loading: false,
-			loadingText: "",
-			errorText: "",
+			loadingText: '',
+			errorText: '',
 			fetched: true,
-			last_fetched: ""
+			last_fetched: ''
 		};
 	},
 	componentDidMount: function() {
@@ -51,15 +50,22 @@ var DeploymentDialog = React.createClass({
 		this.loadingDoneSub.remove();
 		this.errorSub.remove();
 	},
+
+	loadingSub: null,
+
+	loadingDoneSub: null,
+
+	errorSub: null,
+
 	handleClick: function(e) {
 		e.preventDefault();
-		Events.publish('loading', "Fetching latest code…");
+		Events.publish('loading', 'Fetching latest code…');
 		this.setState({
 			fetched: false
 		});
 		var self = this;
 		Q($.ajax({
-			type: "POST",
+			type: 'POST',
 			dataType: 'json',
 			url: this.props.context.projectUrl + '/fetch'
 		}))
@@ -68,35 +74,35 @@ var DeploymentDialog = React.createClass({
 				Events.publish('loading/done');
 				self.setState({
 					fetched: true
-				})
+				});
 			}).catch(this.fetchStatusError).done();
 	},
-	waitForFetchToComplete:function (fetchData) {
+	waitForFetchToComplete: function(fetchData) {
 		var self = this;
-		return this.getFetchStatus(fetchData).then(function (data) {
-			if (data.status === "Complete") {
+		return this.getFetchStatus(fetchData).then(function(data) {
+			if(data.status === 'Complete') {
 				return data;
 			}
-			if (data.status === "Failed") {
-				return $.Deferred(function (d) {
+			if(data.status === 'Failed') {
+				return $.Deferred(function(d) {
 					return d.reject(data);
 				}).promise();
 			}
 			return self.waitForFetchToComplete(fetchData);
 		});
 	},
-	getFetchStatus: function (fetchData) {
+	getFetchStatus: function(fetchData) {
 		return Q($.ajax({
-			type: "GET",
+			type: 'GET',
 			url: fetchData.href,
 			dataType: 'json'
 		}));
 	},
 	fetchStatusError: function(data) {
-		var message  = 'Unknown error';
+		var message = 'Unknown error';
 		if(typeof data.responseText !== 'undefined') {
 			message = data.responseText;
-		} else if (typeof data.message !== 'undefined') {
+		} else if(typeof data.message !== 'undefined') {
 			message = data.message;
 		}
 		Events.publish('error', message);
@@ -106,27 +112,33 @@ var DeploymentDialog = React.createClass({
 	},
 	render: function() {
 		var classes = Helpers.classNames({
-			"deploy-dropdown": true,
-			"loading": this.state.loading,
-			"success": this.state.success
+			'deploy-dropdown': true,
+			loading: this.state.loading,
+			success: this.state.success
 		});
 
 		var form;
 
-		if(this.state.errorText !== "") {
-			form = <ErrorMessages message={this.state.errorText} />
+		if(this.state.errorText !== '') {
+			form = <ErrorMessages message={this.state.errorText}/>;
 		} else if(this.state.fetched) {
-			form = <DeployForm context={this.props.context} data={this.props.data} lastFetchedHandler={this.lastFetchedHandler} />
-		} else if (this.state.loading) {
-			form = <LoadingDeployForm message="Fetching latest code&hellip;" />
+			form = (
+				<DeployForm
+					context={this.props.context}
+					data={this.props.data}
+					lastFetchedHandler={this.lastFetchedHandler}
+				/>
+			);
+		} else if(this.state.loading) {
+			form = <LoadingDeployForm message='Fetching latest code&hellip;'/>;
 		}
 
 		return (
 			<div>
 				<div className={classes} onClick={this.handleClick}>
-					<span className="status-icon" aria-hidden="true"></span>
-					<span className="time">last updated {this.state.last_fetched}</span>
-					<EnvironmentName environmentName={this.props.context.envName} />
+					<span className='status-icon' aria-hidden='true'></span>
+					<span className='time'>last updated {this.state.last_fetched}</span>
+					<EnvironmentName environmentName={this.props.context.envName}/>
 				</div>
 				{form}
 			</div>
@@ -135,11 +147,12 @@ var DeploymentDialog = React.createClass({
 });
 
 var LoadingDeployForm = React.createClass({
+	displayName: 'DeploymentDialog.LoadingDeployForm',
 	render: function() {
 		return (
-			<div className="deploy-form-loading">
-				<div className="icon-holder">
-					<i className="fa fa-cog fa-spin"></i>
+			<div className='deploy-form-loading'>
+				<div className='icon-holder'>
+					<i className='fa fa-cog fa-spin'></i>
 					<span>{this.props.message}</span>
 				</div>
 			</div>
@@ -148,12 +161,13 @@ var LoadingDeployForm = React.createClass({
 });
 
 var ErrorMessages = React.createClass({
+	displayName: 'DeploymentDialog.ErrorMessages',
 	render: function() {
 		return (
-			<div className="deploy-dropdown-errors">
+			<div className='deploy-dropdown-errors'>
 				{this.props.message}
 			</div>
-		)
+		);
 	}
 });
 
@@ -161,11 +175,12 @@ var ErrorMessages = React.createClass({
  * EnvironmentName
  */
 var EnvironmentName = React.createClass({
-	render: function () {
+	displayName: 'DeploymentDialog.EnvironmentName',
+	render: function() {
 		return (
-			<span className="environment-name">
-				<i className="fa fa-rocket">&nbsp;</i>
-				Deployment options <span className="hidden-xs">for {this.props.environmentName}</span>
+			<span className='environment-name'>
+				<i className='fa fa-rocket'>&nbsp;</i>
+				Deployment options <span className='hidden-xs'>for {this.props.environmentName}</span>
 			</span>
 		);
 	}
@@ -175,6 +190,7 @@ var EnvironmentName = React.createClass({
  * DeployForm
  */
 var DeployForm = React.createClass({
+	displayName: 'DeploymentDialog.DeployForm',
 	getInitialState: function() {
 		return {
 			selectedTab: 1,
@@ -191,7 +207,7 @@ var DeployForm = React.createClass({
 			loading: true
 		});
 		Q($.ajax({
-			type: "POST",
+			type: 'POST',
 			dataType: 'json',
 			url: this.props.context.envUrl + '/git_revisions'
 		})).then(function(data) {
@@ -200,7 +216,7 @@ var DeployForm = React.createClass({
 				data: data.Tabs
 			});
 			self.props.lastFetchedHandler(data.last_fetched);
-		}, function(data){
+		}, function(data) {
 			Events.publish('error', data);
 		});
 	},
@@ -208,18 +224,24 @@ var DeployForm = React.createClass({
 	selectHandler: function(id) {
 		this.setState({selectedTab: id});
 	},
-	render: function () {
+	render: function() {
 		if(this.state.loading) {
 			return (
-				<LoadingDeployForm message="Loading&hellip;" />
+				<LoadingDeployForm message='Loading&hellip;'/>
 			);
 		}
 
 		return (
-			<div className="deploy-form-outer clearfix">
-				<form className="form-inline deploy-form" action="POST" action="#">
-					<DeployTabSelector data={this.state.data} onSelect={this.selectHandler} selectedTab={this.state.selectedTab} />
-					<DeployTabs context={this.props.context} data={this.state.data} selectedTab={this.state.selectedTab} SecurityToken={this.state.SecurityToken} />
+			<div className='deploy-form-outer clearfix'>
+				<form className='form-inline deploy-form'
+					action='#'>
+					<DeployTabSelector data={this.state.data}
+						onSelect={this.selectHandler}
+						selectedTab={this.state.selectedTab}/>
+					<DeployTabs context={this.props.context}
+						data={this.state.data}
+						selectedTab={this.state.selectedTab}
+						SecurityToken={this.state.SecurityToken}/>
 				</form>
 			</div>
 		);
@@ -230,15 +252,19 @@ var DeployForm = React.createClass({
  * DeployTabSelector
  */
 var DeployTabSelector = React.createClass({
-	render: function () {
+	displayName: 'DeploymentDialog.DeployTabSelector',
+	render: function() {
 		var self = this;
 		var selectors = this.props.data.map(function(tab) {
 			return (
-				<DeployTabSelect key={tab.id} tab={tab} onSelect={self.props.onSelect} selectedTab={self.props.selectedTab} />
+				<DeployTabSelect key={tab.id}
+					tab={tab}
+					onSelect={self.props.onSelect}
+					selectedTab={self.props.selectedTab}/>
 			);
 		});
 		return (
-			<ul className="SelectionGroup tabbedselectiongroup nolabel">
+			<ul className='SelectionGroup tabbedselectiongroup nolabel'>
 				{selectors}
 			</ul>
 		);
@@ -249,17 +275,19 @@ var DeployTabSelector = React.createClass({
  * DeployTabSelect
  */
 var DeployTabSelect = React.createClass({
+	displayName: 'DeploymentDialog.DeployTabSelect',
 	handleClick: function(e) {
 		e.preventDefault();
-		this.props.onSelect(this.props.tab.id)
+		this.props.onSelect(this.props.tab.id);
 	},
-	render: function () {
+	render: function() {
 		var classes = Helpers.classNames({
-			"active" : (this.props.selectedTab == this.props.tab.id)
+			active: (this.props.selectedTab === this.props.tab.id)
 		});
 		return (
 			<li className={classes}>
-				<a onClick={this.handleClick} href={"#deploy-tab-"+this.props.tab.id} >{this.props.tab.name}</a>
+				<a onClick={this.handleClick}
+					href={'#deploy-tab-' + this.props.tab.id}>{this.props.tab.name}</a>
 			</li>
 		);
 	}
@@ -270,16 +298,21 @@ var DeployTabSelect = React.createClass({
  * DeployTabs
  */
 var DeployTabs = React.createClass({
-	render: function () {
+	displayName: 'DeploymentDialog.DeployTabs',
+	render: function() {
 		var self = this;
 		var tabs = this.props.data.map(function(tab) {
 			return (
-				<DeployTab context={self.props.context} key={tab.id} tab={tab} selectedTab={self.props.selectedTab} SecurityToken={self.props.SecurityToken} />
+				<DeployTab context={self.props.context}
+					key={tab.id}
+					tab={tab}
+					selectedTab={self.props.selectedTab}
+					SecurityToken={self.props.SecurityToken}/>
 			);
 		});
 
 		return (
-			<div className="tab-content">
+			<div className='tab-content'>
 				{tabs}
 			</div>
 		);
@@ -290,6 +323,7 @@ var DeployTabs = React.createClass({
  * DeployTab
  */
 var DeployTab = React.createClass({
+	displayName: 'DeploymentDialog.DeployTab',
 	getInitialState: function() {
 		return {
 			summary: this.getInitialSummaryState(),
@@ -305,7 +339,7 @@ var DeployTab = React.createClass({
 			estimatedTime: null,
 			actionCode: null,
 			initialState: true
-		}
+		};
 	},
 	OptionChangeHandler: function(event) {
 		var options = this.state.options;
@@ -326,7 +360,7 @@ var DeployTab = React.createClass({
 			summary: this.getInitialSummaryState()
 		});
 
-		if(event.target.value === "") {
+		if(event.target.value === '') {
 			return;
 		}
 
@@ -337,13 +371,13 @@ var DeployTab = React.createClass({
 			SecurityID: this.props.SecurityToken
 		};
 		// merge the 'advanced' options if they are set
-		for (var attrname in this.state.options) {
+		for(var attrname in this.state.options) {
 			if(this.state.options.hasOwnProperty(attrname)) {
 				summaryData[attrname] = this.state.options[attrname];
 			}
 		}
 		Q($.ajax({
-			type: "POST",
+			type: 'POST',
 			dataType: 'json',
 			url: this.props.context.envUrl + '/deploy_summary',
 			data: summaryData
@@ -352,7 +386,7 @@ var DeployTab = React.createClass({
 				summary: data
 			});
 			Events.publish('change_loading/done');
-		}.bind(this), function(){
+		}.bind(this), function() {
 			Events.publish('change_loading/done');
 		});
 	},
@@ -365,59 +399,85 @@ var DeployTab = React.createClass({
 		if(this.showOptions()) {
 			return true;
 		}
-		return this.props.tab.field_type == 'textfield';
+		return this.props.tab.field_type === 'textfield';
 	},
 
 	shaChosen: function() {
 		return (this.state.sha !== '');
 	},
 
-	render: function () {
+	render: function() {
 		var classes = Helpers.classNames({
-			"tab-pane": true,
-			"clearfix": true,
-			"active" : (this.props.selectedTab == this.props.tab.id)
+			'tab-pane': true,
+			clearfix: true,
+			active: (this.props.selectedTab === this.props.tab.id)
 		});
 
 		// setup the dropdown or the text input for selecting a SHA
 		var selector;
-		if (this.props.tab.field_type == 'dropdown') {
+		if(this.props.tab.field_type === 'dropdown') {
 			var changeHandler = this.changeHandler;
-			if(this.showVerifyButton()) { changeHandler = this.SHAChangeHandler }
-			selector = <SelectorDropdown ref="sha_selector" tab={this.props.tab} changeHandler={changeHandler} />
-		} else if (this.props.tab.field_type == 'textfield') {
-			selector = <SelectorText ref="sha_selector" tab={this.props.tab} changeHandler={this.SHAChangeHandler} />
+			if(this.showVerifyButton()) {
+				changeHandler = this.SHAChangeHandler;
+			}
+			selector = (
+				<SelectorDropdown
+					ref='sha_selector'
+					tab={this.props.tab}
+					changeHandler={changeHandler}
+				/>
+			);
+		} else if(this.props.tab.field_type === 'textfield') {
+			selector = (
+				<SelectorText
+					ref='sha_selector'
+					tab={this.props.tab}
+					changeHandler={this.SHAChangeHandler}
+				/>
+			);
 		}
 
 		// 'Advanced' options
 		var options = null;
 		if(this.showOptions()) {
-			options = <AdvancedOptions tab={this.props.tab} changeHandler={this.OptionChangeHandler} />
+			options = (
+				<AdvancedOptions
+					tab={this.props.tab}
+					changeHandler={this.OptionChangeHandler}
+				/>
+			);
 		}
 
 		// 'The verify button'
 		var verifyButton = null;
 		if(this.showVerifyButton()) {
-			verifyButton = <VerifyButton disabled={!this.shaChosen()} changeHandler={this.changeHandler} />
+			verifyButton = (
+				<VerifyButton
+					disabled={!this.shaChosen()}
+					changeHandler={this.changeHandler}
+				/>
+			);
 		}
 
 		return (
-			<div id={"deploy-tab-"+this.props.tab.id} className={classes}>
-				<div className="section">
-					<div htmlFor={this.props.tab.field_id} className="header">
-						<span className="numberCircle">1</span> {this.props.tab.field_label}
+			<div id={'deploy-tab-' + this.props.tab.id} className={classes}>
+				<div className='section'>
+					<div htmlFor={this.props.tab.field_id} className='header'>
+						<span className='numberCircle'>1</span> {this.props.tab.field_label}
 					</div>
 					{selector}
 					{options}
 					{verifyButton}
 				</div>
-				<DeployPlan context={this.props.context} summary={this.state.summary} />
+				<DeployPlan context={this.props.context}
+					summary={this.state.summary}/>
 			</div>
 		);
 	}
 });
 
 var SelectorDropdown = React.createClass({
+	displayName: 'DeploymentDialog.SelectorDropdown',
 	componentDidMount: function() {
 		$(React.findDOMNode(this.refs.sha)).select2({
 			// Load data into the select2.
@@ -428,7 +488,7 @@ var SelectorDropdown = React.createClass({
 
 		// Trigger handler only needed if there is no explicit button.
 		if(this.props.changeHandler) {
-			$(React.findDOMNode(this.refs.sha)).select2().on("change", this.props.changeHandler);
+			$(React.findDOMNode(this.refs.sha)).select2().on('change', this.props.changeHandler);
 		}
 	},
 
@@ -439,15 +499,15 @@ var SelectorDropdown = React.createClass({
 
 		return (
 			<div>
-				<div className="field">
+				<div className='field'>
 					<select
-						ref="sha"
+						ref='sha'
 						id={this.props.tab.field_id}
-						name="sha"
-						className="dropdown"
+						name='sha'
+						className='dropdown'
 						onChange={this.props.changeHandler}
 						style={style}>
-						<option value="">Select {this.props.tab.field_id}</option>
+						<option value=''>Select {this.props.tab.field_id}</option>
 					</select>
 				</div>
 			</div>
@@ -456,15 +516,16 @@ var SelectorDropdown = React.createClass({
 });
 
 var SelectorText = React.createClass({
+	displayName: 'DeploymentDialog.SelectorText',
 	render: function() {
-		return(
-			<div className="field">
+		return (
+			<div className='field'>
 				<input
-					type="text"
-					ref="sha"
+					type='text'
+					ref='sha'
 					id={this.props.tab.field_id}
-					name="sha"
-					className="text"
+					name='sha'
+					className='text'
 					onChange={this.props.changeHandler}
 				/>
 			</div>
@@ -473,13 +534,14 @@ var SelectorText = React.createClass({
 });
 
 var VerifyButton = React.createClass({
+	displayName: 'DeploymentDialog.VerifyButton',
 	render: function() {
 		return (
-			<div className="">
+			<div>
 				<button
 					disabled={this.props.disabled}
-					value="Verify deployment"
-					className="btn btn-default"
+					value='Verify deployment'
+					className='btn btn-default'
 					onClick={this.props.changeHandler}>
 					Verify deployment
 				</button>
@@ -489,14 +551,15 @@ var VerifyButton = React.createClass({
 });
 
 var AdvancedOptions = React.createClass({
-	render: function () {
+	displayName: 'DeploymentDialog.AdvancedOptions',
+	render: function() {
 		return (
-			<div className="deploy-options">
-				<div className="fieldcheckbox">
+			<div className='deploy-options'>
+				<div className='fieldcheckbox'>
 					<label>
 						<input
-							type="checkbox"
-							name="force_full"
+							type='checkbox'
+							name='force_full'
 							onChange={this.props.changeHandler}
 						/>
 						Force full deployment

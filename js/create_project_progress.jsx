@@ -1,3 +1,6 @@
+/* globals React */
+'use strict';
+
 var _ = require('underscore');
 var DeployKeyTest = require('./deploy_key_test.jsx');
 
@@ -39,7 +42,7 @@ var CreateProjectProgress = React.createClass({
 			window.clearInterval(this.checkInterval);
 		}
 	},
-	
+
 	handleCheckStatus: function() {
 		if(!this.state.checkingStatus) {
 			this.checkStatus();
@@ -94,8 +97,8 @@ var CreateProjectProgress = React.createClass({
 			var environmentLink = (
 				<div className="col-md-12">
 					<p>
-						<a href={window.location.href} 
-							onClick={this.reload} 
+						<a href={window.location.href}
+							onClick={this.reload}
 							className="btn btn-primary">{environmentLinkText}</a>
 					</p>
 				</div>

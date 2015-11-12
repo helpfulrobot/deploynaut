@@ -1,3 +1,6 @@
+/* globals React */
+'use strict';
+
 var DeployKeyTest = React.createClass({
 
 	getInitialState: function() {
@@ -10,10 +13,11 @@ var DeployKeyTest = React.createClass({
 
 	render: function() {
 
-		if (this.props.deployKey) {
-			var key = <pre className="deploy-key">{this.props.deployKey}</pre>;
+		var key = '';
+		if(this.props.deployKey) {
+			key = <pre className="deploy-key">{this.props.deployKey}</pre>;
 		} else {
-			var key = (
+			key = (
 				<div className="alert alert-error">
 					Something bad happened and we were not able to create your deploy key - support has been alerted.
 					Please contact the helpdesk if the key does not appear on your stack page soon.
@@ -21,30 +25,47 @@ var DeployKeyTest = React.createClass({
 			);
 		}
 
+		var deployKeyHelp = '';
 		if(this.props.repoInterface == 'Github') {
-			var deployKeyHelp = (
+			deployKeyHelp = (
 				<p>
-					<i className="fa fa-github"></i> <a href="https://developer.github.com/guides/managing-deploy-keys/#deploy-keys" target="_blank">Deploy key help</a>
+					<i className="fa fa-github"></i>
+					<a href="https://developer.github.com/guides/managing-deploy-keys/#deploy-keys"
+						target="_blank">Deploy key help</a>
 				</p>
 			);
-		}  else if (this.props.repoInterface == 'Bitbucket') {
-			var deployKeyHelp = (
+		} else if(this.props.repoInterface == 'Bitbucket') {
+			deployKeyHelp = (
 				<p>
-					<i className="fa fa-bitbucket"></i> <a href="https://confluence.atlassian.com/bitbucket/use-deployment-keys-294486051.html" target="_blank">Deploy key help</a>
+					<i className="fa fa-bitbucket"></i>
+					<a href="https://confluence.atlassian.com/bitbucket/use-deployment-keys-294486051.html"
+						target="_blank">Deploy key help</a>
 				</p>
 			);
-		} else if (this.props.repoInterface == 'Gitlab') {
-			var deployKeyHelp = (
+		} else if(this.props.repoInterface == 'Gitlab') {
+			deployKeyHelp = (
 				<p>
-					<img src="deploynaut/img/gitlab.png" alt="Gitlab" className="gitlab-icon" /> <a href="http://doc.gitlab.com/ce/ssh/README.html#deploy-keys" target="_blank">Deploy key help</a>
+					<img src="deploynaut/img/gitlab.png"
+						alt="Gitlab"
+						className="gitlab-icon"/>
+					<a href="http://doc.gitlab.com/ce/ssh/README.html#deploy-keys"
+						target="_blank">Deploy key help</a>
 				</p>
 			);
 		} else {
-			var deployKeyHelp = (
+			deployKeyHelp = (
 				<ul className="list-inline">
-					<li><i className="fa fa-github"></i> <a href="https://developer.github.com/guides/managing-deploy-keys/#deploy-keys" target="_blank">Github</a></li>
-					<li><i className="fa fa-bitbucket"></i> <a href="https://confluence.atlassian.com/bitbucket/use-deployment-keys-294486051.html" target="_blank">Bitbucket</a></li>
-					<li><img src="deploynaut/img/gitlab.png" alt="Gitlab" className="gitlab-icon" /> <a href="http://doc.gitlab.com/ce/ssh/README.html#deploy-keys" target="_blank">Gitlab</a></li>
+					<li><i className="fa fa-github"></i>
+						<a href="https://developer.github.com/guides/managing-deploy-keys/#deploy-keys"
+							target="_blank">Github</a></li>
+					<li><i className="fa fa-bitbucket"></i>
+						<a href="https://confluence.atlassian.com/bitbucket/use-deployment-keys-294486051.html"
+							target="_blank">Bitbucket</a></li>
+					<li><img src="deploynaut/img/gitlab.png"
+						alt="Gitlab"
+						className="gitlab-icon"/>
+						<a href="http://doc.gitlab.com/ce/ssh/README.html#deploy-keys"
+							target="_blank">Gitlab</a></li>
 				</ul>
 			);
 		}
@@ -58,7 +79,8 @@ var DeployKeyTest = React.createClass({
 						{deployKeyHelp}
 					</div>
 				</div>
-				<div className="col-md-8 col-md-offset-2 text-left" id="deploy-key-test-holder">
+				<div className="col-md-8 col-md-offset-2 text-left"
+					id="deploy-key-test-holder">
 					{key}
 				</div>
 				<div className="row">
@@ -71,7 +93,7 @@ var DeployKeyTest = React.createClass({
 	},
 
 	testAccess: function() {
-		this.setState({ loading: true });
+		this.setState({loading: true});
 		var self = this;
 		$.ajax({
 			url: this.props.deployKeyTestUrl,
@@ -101,21 +123,21 @@ var DeployKeyTest = React.createClass({
 	},
 
 	button: function() {
-		var buttonText = { __html: 'Test Access' };
+		var buttonText = {__html: 'Test Access'};
 		var buttonDisabled = false;
 		var buttonClass = 'btn btn-primary';
-		if (!this.props.deployKey) {
+		if(!this.props.deployKey) {
 			buttonDisabled = true;
 			buttonClass = 'btn';
 		} else if(this.state.loading) {
-			buttonText = { __html: '<i class="fa fa-cog fa-spin"></i> Attempting to clone repository...' };
+			buttonText = {__html: '<i class="fa fa-cog fa-spin"></i> Attempting to clone repository...'};
 			buttonDisabled = true;
 		} else if(this.state.canAccessRepo) {
-			buttonText = { __html: '<i class="fa fa-check"></i> We can access your repository' };
+			buttonText = {__html: '<i class="fa fa-check"></i> We can access your repository'};
 			buttonDisabled = true;
 			buttonClass = 'btn btn-success';
 		}
-		
+
 		var msg;
 		if(this.state.tested && !this.state.canAccessRepo && !this.state.loading) {
 			msg = (
@@ -125,8 +147,12 @@ var DeployKeyTest = React.createClass({
 			);
 		}
 
-		 var button = (
-			<button href="#" className={buttonClass} onClick={this.handleTestAccess} disabled={buttonDisabled} dangerouslySetInnerHTML={buttonText}></button>
+		var button = (
+			<button href="#"
+				className={buttonClass}
+				onClick={this.handleTestAccess}
+				disabled={buttonDisabled}
+				dangerouslySetInnerHTML={buttonText}></button>
 		);
 
 		return (

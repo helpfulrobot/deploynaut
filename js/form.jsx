@@ -1,9 +1,12 @@
-var validator = require("validator");
+/* globals React, Q */
+'use strict';
+
+var validator = require('validator');
 var _ = require('underscore');
 
 // Create a validation method that can be used as:
 // equalsField|"firstFieldID"|"secondFieldID"
-validator.extend('equalsField', function (string, firstFieldID, secondFieldID ) {
+validator.extend('equalsField', function(string, firstFieldID, secondFieldID) {
 	var first = document.getElementById(firstFieldID);
 	var second = document.getElementById(secondFieldID);
 	var firstValue = '';
@@ -18,12 +21,21 @@ validator.extend('equalsField', function (string, firstFieldID, secondFieldID ) 
 });
 
 var Form = React.createClass({
-
-	getInitialState: function () {
+	displayName: 'Form.Form',
+	getInitialState: function() {
 		return {
 			isSubmitting: false,
 			securityID: this.props.securityID
 		};
+	},
+
+	componentWillMount: function() {
+		// We add a model to use when submitting the form
+		this.model = {};
+		// We create a map of traversed inputs
+		this.inputs = {};
+		// these are the child components that will be rendered
+		this.amendedChildren = React.Children.map(this.props.children, this.amendChildren);
 	},
 
 	componentWillReceiveProps: function(nextProps) {
@@ -35,16 +47,7 @@ var Form = React.createClass({
 		});
 	},
 
-	componentWillMount: function () {
-		// We add a model to use when submitting the form
-		this.model = {};
-		// We create a map of traversed inputs
-		this.inputs = {};
-		// these are the child components that will be rendered
-		this.amendedChildren = React.Children.map(this.props.children, this.amendChildren);
-	},
-
-	componentWillUpdate: function(nextProps, nextState) {
+	componentWillUpdate: function(nextProps) {
 		// these are the child components that will be rendered
 		this.amendedChildren = React.Children.map(nextProps.children, this.amendChildren);
 	},
@@ -85,39 +88,38 @@ var Form = React.createClass({
 	},
 
 	// Child input components will call this method when they are mounting
-	attachToForm: function (component) {
+	attachToForm: function(component) {
 		this.inputs[component.props.name] = component;
 		this.model[component.props.name] = component.state.value;
-		//this.validate(component);
 	},
 
 	// Child input components will call this method when they are unmounting
-	detachFromForm: function (component) {
+	detachFromForm: function(component) {
 		delete this.inputs[component.props.name];
 		delete this.model[component.props.name];
 	},
 
 	// This is called on submit and updates the model with the values from the
 	// child input components and the latest CSRF token
-	updateModel: function () {
-		_.keys(this.inputs).forEach(function (name) {
+	updateModel: function() {
+		_.keys(this.inputs).forEach(function(name) {
 			this.model[name] = this.inputs[name].state.value;
 		}.bind(this));
 	},
 
 	// The validate method grabs what it needs from the component,
 	// validates the component and then validates the form
-	validate: function (component) {
+	validate: function(component) {
 
-		if (!component.props.validations) {
-			return;
+		if(!component.props.validations) {
+			return true;
 		}
 
 		var isValid = true;
 
-		if (component.state.value || component.props.required) {
+		if(component.state.value || component.props.required) {
 
-			component.props.validations.split('/').forEach(function (validation) {
+			component.props.validations.split('/').forEach(function(validation) {
 				// By splitting on "|" we get an array of arguments that we pass
 				// to the validator. ex.: isLength|5 -> ['isLength', '5']
 				var args = validation.split('|');
@@ -126,18 +128,16 @@ var Form = React.createClass({
 
 				// We use JSON.parse to convert the string values passed to the
 				// correct type. Ex. 'isLength|1' will make '1' actually a number
-				args = args.map(function (arg) {
+				args = args.map(function(arg) {
 					return JSON.parse(arg);
 				});
 
 				args = [component.state.value].concat(args);
 
-				if(typeof validator[validateMethod] === 'undefined') {
-					console.warn('Validation method "'+validateMethod+'" on component "'+component.props.name + '" doesn\'t exists');
-				} else {
+				if(typeof validator[validateMethod] !== 'undefined') {
 					// this is effectively a call to something like:
 					// `validator.isLength('valueFromInput', 5)`
-					if (!validator[validateMethod].apply(validator, args)) {
+					if(!validator[validateMethod].apply(validator, args)) {
 						isValid = false;
 					}
 				}
@@ -151,25 +151,25 @@ var Form = React.createClass({
 
 		return isValid;
 	},
-	validateForm: function () {
+	validateForm: function() {
 
 		var allIsValid = true;
 
 		var inputs = this.inputs;
 		var self = this;
 		// Validate all the Input components
-		_.keys(inputs).forEach(function (name) {
+		_.keys(inputs).forEach(function(name) {
 			if(!self.validate(inputs[name])) {
 				allIsValid = false;
 			}
 		});
-		this.setState({ isValid: allIsValid });
+		this.setState({isValid: allIsValid});
 		return allIsValid;
 	},
 
 	// Submit the form if all fields validation passes and redirect if the
 	// return contains a 'RedirectTo' value
-	submit: function (event) {
+	submit: function(event) {
 		event.stopPropagation();
 		event.preventDefault();
 
@@ -179,11 +179,11 @@ var Form = React.createClass({
 
 		this.updateModel();
 
-		this.setState({ isSubmitting: true });
+		this.setState({isSubmitting: true});
 
 		var self = this;
-		Q($.ajax({
-			type: "POST",
+		new Q($.ajax({
+			type: 'POST',
 			url: this.props.url,
 			data: {
 				Details: JSON.stringify(this.model),
@@ -191,19 +191,19 @@ var Form = React.createClass({
 			}
 		})).then(function(data) {
 			if(data.NewSecurityID) {
-				self.setState({ securityID: data.NewSecurityID });
+				self.setState({securityID: data.NewSecurityID});
 			}
 			if(self.props.afterSuccess) {
 				self.props.afterSuccess(data);
 			} else {
 				self.afterSuccess(data);
 			}
-		},function(response) {
+		}, function(response) {
 			self.afterFailure(response);
-			self.setState({ isSubmitting: false });
+			self.setState({isSubmitting: false});
 		}).catch(function(response) {
 			self.afterFailure(response);
-			self.setState({ isSubmitting: false });
+			self.setState({isSubmitting: false});
 		});
 	},
 
@@ -214,22 +214,26 @@ var Form = React.createClass({
 	},
 
 	afterFailure: function(response) {
-		this.setState({ isSubmitting: false });
+		this.setState({isSubmitting: false});
 
-		var ct = response.getResponseHeader("content-type") || "";
-		if (ct.indexOf('json') > -1) {
+		var ct = response.getResponseHeader('content-type') || '';
+		if(ct.indexOf('json') > -1) {
+			var json = {};
 			// The response may be parse-able JSON with "InputErrors" structure holding field-specific errors.
 			try {
-				var json = JSON.parse(response.responseText);
-			} catch (e) {
-				this.setErrorOnForm('Received badly formatted response. Try again or contact the helpdesk if the problem persists.');
+				json = JSON.parse(response.responseText);
+			} catch(e) {
+				this.setErrorOnForm(
+					'Received badly formatted response. ' +
+					'Try again or contact the helpdesk if the problem persists.'
+				);
 			}
 
-			if(typeof json.NewSecurityID!=='undefined') {
-				this.setState({ securityID: json.NewSecurityID });
+			if(typeof json.NewSecurityID !== 'undefined') {
+				this.setState({securityID: json.NewSecurityID});
 			}
 
-			if(_.size(json.InputErrors)>0) {
+			if(_.size(json.InputErrors) > 0) {
 				this.setErrorsOnInputs(json.InputErrors);
 			} else {
 				this.setErrorOnForm(null);
@@ -244,7 +248,7 @@ var Form = React.createClass({
 	 * Triggers global form error.
 	 */
 	setErrorOnForm: function(message) {
-		if (!message) {
+		if(!message) {
 			message = 'Unspecified server error occured. Try again or contact the helpdesk if the problem persists.';
 		}
 
@@ -257,11 +261,11 @@ var Form = React.createClass({
 	/**
 	 * Triggers errors on form fields matching passed object's keys.
 	 */
-	setErrorsOnInputs: function (errors) {
+	setErrorsOnInputs: function(errors) {
 		var formError = [];
-		_.keys(errors).forEach(function (name) {
+		_.keys(errors).forEach(function(name) {
 
-			if (typeof this.inputs[name]!=='undefined' && this.inputs[name]) {
+			if(typeof this.inputs[name] !== 'undefined' && this.inputs[name]) {
 				var component = this.inputs[name];
 
 				component.setState({
@@ -275,16 +279,17 @@ var Form = React.createClass({
 
 		}.bind(this));
 
-		if (formError.length>0) {
+		if(formError.length > 0) {
 			this.setErrorOnForm(formError.join('<br/>'));
 		}
 	},
 
-	render: function () {
-		var message = "";
-		if (this.state.serverMessage) {
+	render: function() {
+		var message = '';
+		if(this.state.serverMessage) {
 			message = (
-				<div className={'alert alert-' + this.state.serverMessageType} dangerouslySetInnerHTML={{__html:this.state.serverMessage}} />
+				<div className={'alert alert-' + this.state.serverMessageType}
+					dangerouslySetInnerHTML={{__html: this.state.serverMessage}}/>
 			);
 		}
 
@@ -298,15 +303,20 @@ var Form = React.createClass({
 		if(this.props.buttonTitle) {
 			buttonTitle = this.props.buttonTitle;
 		}
-		var buttonSubmittingTitle = "Submitting";
-		if(this.props.buttonSubmittingTitle) {
-			buttonSubmittingTitle = this.props.buttonSubmittingTitle;
+
+		if(this.state.isSubmitting) {
+			buttonTitle = 'Submitting';
+			if(this.props.buttonSubmittingTitle) {
+				buttonTitle = this.props.buttonSubmittingTitle;
+			}
 		}
 		return (
-			<form onSubmit={this.submit} className="form">
+			<form onSubmit={this.submit} className='form'>
 				{message}
 				{this.amendedChildren}
-				<button className="btn btn-primary" type="submit" disabled={this.state.isSubmitting}>{this.state.isSubmitting?buttonSubmittingTitle:buttonTitle}</button>
+				<button className="btn btn-primary"
+					type="submit"
+					disabled={this.state.isSubmitting}>{buttonTitle}</button>
 				{cancelButton}
 			</form>
 		);
@@ -318,29 +328,33 @@ var Form = React.createClass({
  *
  * @prop value Gets set as the initial value on the form control (like defaultValue in normal React inputs)
  * @prop onSetValue Handler called when the value changes, including when the initial value is set. The new value
- *	is passed as a parameter.
+ *    is passed as a parameter.
  */
 var InputMixin = {
-	getInitialState: function () {
+	getInitialState: function() {
 		return {
 			isValid: true,
 			value: this.props.value || '',
 			serverErrors: null
 		};
 	},
-	componentWillMount: function () {
+	componentWillMount: function() {
 		this.props.attachToForm(this);
-		if (_.has(this.props, 'onSetValue')) this.props.onSetValue(this.props.value);
-	},
-	componentWillUpdate: function(nextProps, nextState) {
-		if (this.state.value!=nextState.value) {
-			if (_.has(this.props, 'onSetValue')) this.props.onSetValue(nextState.value);
+		if(_.has(this.props, 'onSetValue')) {
+			this.props.onSetValue(this.props.value);
 		}
 	},
-	componentWillUnmount: function () {
+	componentWillUpdate: function(nextProps, nextState) {
+		if(this.state.value !== nextState.value) {
+			if(_.has(this.props, 'onSetValue')) {
+				this.props.onSetValue(nextState.value);
+			}
+		}
+	},
+	componentWillUnmount: function() {
 		this.props.detachFromForm(this);
 	},
-	setValue: function (event) {
+	setValue: function(event) {
 		this.setState({
 			value: event.currentTarget.value,
 			isValid: true
@@ -349,19 +363,26 @@ var InputMixin = {
 };
 
 var Input = React.createClass({
+	displayName: 'Form.Input',
 	mixins: [InputMixin],
-	render: function () {
+	render: function() {
 		var className = 'form-control';
 		var alert;
-		if (!this.state.isValid) {
-			alert = <div className='validation-message'>{this.state.serverError || this.props.validationError}</div>;
+		if(!this.state.isValid) {
+			alert =
+				<div className='validation-message'>{this.state.serverError || this.props.validationError}</div>;
 			className += ' validation-error';
 		}
 
 		return (
 			<div>
 				{alert}
-				<input id={this.props.name} type="text" className={className} name={this.props.name} onChange={this.setValue} value={this.state.value}/>
+				<input id={this.props.name}
+					type="text"
+					className={className}
+					name={this.props.name}
+					onChange={this.setValue}
+					value={this.state.value}/>
 			</div>
 		);
 	}
@@ -371,32 +392,39 @@ var Input = React.createClass({
  * Requires an array of objects containing "id" and "value" props.
  */
 var Select = React.createClass({
+	displayName: 'Form.Select',
 	mixins: [InputMixin],
 
 	componentDidMount: function() {
 		// Trigger handler only needed if there is no explicit button.
-		$(React.findDOMNode(this.refs.selector)).select2().on("change", this.setValue);
+		$(React.findDOMNode(this.refs.selector)).select2().on('change', this.setValue);
 	},
 
-	render: function () {
+	render: function() {
 		var className = 'form-control';
 		var alert;
-		if (!this.state.isValid) {
-			alert = <div className='validation-message'>{this.state.serverError || this.props.validationError}</div>;
+		if(!this.state.isValid) {
+			alert =
+				<div className='validation-message'>{this.state.serverError || this.props.validationError}</div>;
 			className += ' validation-error';
 		}
 
-		var self = this;
 		var options = this.props.options.map(function(option) {
 			return (
-				<option key={option.id} value={option.id}>{option.value}</option>
+				<option key={option.id}
+					value={option.id}>{option.value}</option>
 			);
 		});
 
 		return (
 			<div>
 				{alert}
-				<select ref="selector" id={this.props.name} className={className} name={this.props.name} onChange={this.setValue} value={this.state.value}>
+				<select ref="selector"
+					id={this.props.name}
+					className={className}
+					name={this.props.name}
+					onChange={this.setValue}
+					value={this.state.value}>
 					{options}
 				</select>
 			</div>
@@ -405,37 +433,51 @@ var Select = React.createClass({
 });
 
 var Password = React.createClass({
+	displayName: 'Form.Password',
 	mixins: [InputMixin],
-	render: function () {
+	render: function() {
 		var className = 'form-control';
 		var alert;
-		if (!this.state.isValid) {
-			alert = <div className='validation-message'>{this.state.serverError || this.props.validationError}</div>;
+		if(!this.state.isValid) {
+			alert =
+				<div className='validation-message'>{this.state.serverError || this.props.validationError}</div>;
 			className += ' validation-error';
 		}
 
 		return (
 			<div>
 				{alert}
-				<input id={this.props.name} type="password" className={className} name={this.props.name} onChange={this.setValue} value={this.state.value} />
+				<input id={this.props.name}
+					type="password"
+					className={className}
+					name={this.props.name}
+					onChange={this.setValue}
+					value={this.state.value}/>
 			</div>
 		);
 	}
 });
 
 var PasswordConfirm = React.createClass({
+	displayName: 'Form.PasswordConfirm',
 	mixins: [InputMixin],
-	render: function () {
+	render: function() {
 		var className = 'form-control';
 		var alert;
-		if (!this.state.isValid) {
-			alert = <div className='validation-message'>{this.state.serverError || this.props.validationError}</div>;
+		if(!this.state.isValid) {
+			alert =
+				<div className='validation-message'>{this.state.serverError || this.props.validationError}</div>;
 			className += ' validation-error';
 		}
 
 		return (
 			<div>
-				<input id={this.props.name} type="password" className={className}  name={this.props.name} onChange={this.setValue} value={this.state.value} />
+				<input id={this.props.name}
+					type="password"
+					className={className}
+					name={this.props.name}
+					onChange={this.setValue}
+					value={this.state.value}/>
 				{alert}
 			</div>
 		);
